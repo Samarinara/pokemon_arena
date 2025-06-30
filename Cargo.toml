@@ -32,3 +32,6 @@ quit = "2.0.0"
 # Text input widget
 rat-text = "1.0.5"
 color-eyre = "0.6.5"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
+tracing-appender = "0.2.3"

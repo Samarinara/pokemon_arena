@@ -1,8 +1,8 @@
 use std::collections::HashMap;
+use rand::Rng;
 use serde_json;
 use serde::{Deserialize};
  
-use crate::serde_handler;
 
 #[derive(Deserialize)]
 pub struct PokemonStatBlock {
@@ -56,4 +56,25 @@ pub fn get_pokemon_stat_block(name: &str) -> Option<PokemonStatBlock> {
     };
     
     index.remove(name)
+}
+
+pub fn get_random_pokemon() -> String {
+    // Try to load the Pokemon data, return a fallback if it fails
+    let json_data = match std::fs::read_to_string("src/pokemon/pokemon_by_number.json") {
+        Ok(data) => data, 
+        Err(_) => return "Unknown Pokemon".to_string(), // Fallback to a generic string
+    };
+
+    // Create a variable with the contents of the json
+    let index: HashMap<i32, String> = match serde_json::from_str(&json_data) {
+        Ok(index) => index,
+        Err(_) => return "Unknown Pokemon".to_string(), // Fallback to a generic string
+    };
+
+    let mut rng = rand::thread_rng();
+
+    let keys: Vec<i32> = index.keys().cloned().collect();
+    let random_key = keys[rng.gen_range(0..keys.len())];
+
+    return index.get(&random_key).unwrap().to_string();
 }
