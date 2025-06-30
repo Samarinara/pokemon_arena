@@ -1,0 +1,11 @@
+{
+  "username": "testplayer",
+  "email": "test@pokemon.com",
+  "pokemon_list": [
+    "Pikachu",
+    "Charizard",
+    "Blastoise"
+  ],
+  "created_at": "2025-06-28T15:17:20.020464",
+  "last_login": "2025-06-28T15:17:20.020475"
+}

@@ -1,157 +1,223 @@
-//! # Pokemon Arena - Ratatui Example
-//! 
-//! This is a comprehensive example of using ratatui to build a terminal user interface.
-//! It demonstrates key concepts like:
-//! - Setting up the terminal backend
-//! - Creating a main application loop
-//! - Handling user input and events
-//! - Drawing widgets and layouts
-//! - Managing application state
-//! - Error handling
+use ratatui::{
+    backend::CrosstermBackend, layout::{Constraint, Direction, Layout}, style::{Color, Style}, symbols::line::HORIZONTAL, widgets::{Block, Borders, List, ListItem, Paragraph}, Frame, Terminal
+};
+use crossterm::{
+    event::{self, Event, KeyCode}, execute, terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType, LeaveAlternateScreen}
+};
+use std::io::{self, stdout, Stdout};
 
-// Import modules
-mod pokemon {
+use tokio::io::AsyncWriteExt;
+
+pub mod menus {
+    pub mod auth_menu;
+}
+pub mod ui_tooling{
+    pub mod text_input;
+}
+pub mod pokemon {
     pub mod pokemon_indexer;
 }
+pub mod user_management {
+    pub mod email_auth;
+}
+use crate::menus::auth_menu;
 
-mod serde_handler; 
-mod ui;
 
-use std::{
-    io,
-    panic,
-    time::Duration,
-};
+/// Menu items to display
+const MENU_ITEMS: &[&str] = &["Start", "Settings", "Pokedex", "Quit"];
 
-// Import the main ratatui types we'll need
-use ratatui::{
-    backend::CrosstermBackend,
-    Terminal,
-};
-
-// Import crossterm for terminal control
-use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture},
-    execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
-};
-
-// Import anyhow for error handling
-use anyhow::{Context, Result};
-
-// Import our UI modules
-use ui::{draw_ui, handle_input};
-use ui::states::App;
-
-// ============================================================================
-// MAIN APPLICATION LOOP
-// ============================================================================
-
-/// The main function - entry point of our application
-#[tokio::main]
-async fn main() -> Result<()> {
-    // Set up panic handling to restore terminal state
-    panic::set_hook(Box::new(|panic_info| {
-        // Restore terminal state on panic
-        let _ = disable_raw_mode();
-        let _ = execute!(io::stdout(), LeaveAlternateScreen, DisableMouseCapture);
-        eprintln!("\nApplication panicked: {:?}", panic_info);
-        eprintln!("Terminal state has been restored.");
-    }));
-
-    // Run the main application
-    run_app().await
+/// Application state
+pub struct App {
+    selected: usize, // Index of the selected menu item
+    state: AppState,
+    pub email_input: crate::ui_tooling::text_input::TextInputWidgetState,
 }
 
-/// Main application loop
-async fn run_app() -> Result<()> {
-    // ========================================================================
-    // TERMINAL SETUP
-    // ========================================================================
-    
-    // Enable raw mode - this gives us direct control over the terminal
-    // Without this, the terminal would handle input buffering and echo
-    enable_raw_mode().context("Failed to enable raw mode")?;
+enum AppState {
+    MainMenu,
+    Settings,
+    Auth,
+    // Add other states (e.g., Game, Help, etc.)
+}
 
-    // Enter alternate screen - this creates a new screen buffer
-    // When we exit, the original screen content will be restored
-    execute!(io::stdout(), EnterAlternateScreen, EnableMouseCapture)
-        .context("Failed to enter alternate screen")?;
+#[quit::main]
+#[tokio::main]
+async fn main() -> Result<(), io::Error> {
+    // Terminal setup
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    let backend = CrosstermBackend::new(&mut stdout);
+    let mut terminal = Terminal::new(backend)?;
 
-    // Create the terminal backend
-    // CrosstermBackend handles the low-level terminal operations
-    let backend = CrosstermBackend::new(io::stdout());
-    
-    // Create the terminal instance
-    // This is our interface for drawing to the screen
-    let mut terminal = Terminal::new(backend).context("Failed to create terminal")?;
+    let mut app = App { selected: 0, state: AppState::Auth, email_input: crate::ui_tooling::text_input::TextInputWidgetState::new() };
 
-    // ========================================================================
-    // APPLICATION STATE INITIALIZATION
-    // ========================================================================
-    
-    // Create our application state with main menu as default
-    let mut app = App::new();
-    // The main menu is already the default state when App::new() is called
-
-    // ========================================================================
-    // MAIN EVENT LOOP
-    // ========================================================================
-    
-    // This is the heart of our application - it runs until we want to quit
+    // Main event loop
     loop {
-        // Clear the screen and draw the current UI state
-        if let Err(e) = terminal.draw(|f| draw_ui(f, &app)) {
-            eprintln!("Failed to draw UI: {}", e);
-            break;
-        }
+        terminal.clear()?;
+        terminal.draw(|f| match app.state {
+            AppState::MainMenu => main_menu(f, &app),
+            AppState::Settings => settings(f, &app),
+            AppState::Auth => auth_menu::menu(f, &app),
+            
+        })?;
 
-        // Check if we should quit
-        if app.should_quit() {
-            break;
-        }
-
-        // Handle input events with a timeout
-        // This prevents the app from blocking indefinitely
-        match crossterm::event::poll(Duration::from_millis(250)) {
-            Ok(true) => {
-                // Get the next event from the terminal
-                match event::read() {
-                    Ok(event) => {
-                        // Process the event and update application state
-                        handle_input(&mut app, event);
-                    }
-                    Err(e) => {
-                        eprintln!("Failed to read event: {}", e);
-                        break;
-                    }
+        if let Event::Key(key) = event::read()? {
+            match key.code {
+                // Navigation (state-agnostic)
+                KeyCode::Up => app.selected = app.selected.saturating_sub(1),
+                KeyCode::Down => app.selected = app.selected.saturating_add(1),
+                
+                // State transitions
+                KeyCode::Enter => match app.state {
+                    AppState::MainMenu => match app.selected {
+                        1 => app.state = AppState::Settings,
+                        _ => { /* ... */ }
+                    },
+                    AppState::Auth => auth_menu::input(&mut app),
+                    _ => {} // Handle other states
+                },
+                
+                // Global quit
+                KeyCode::Esc => {
+                    let mut terminal = Terminal::new(CrosstermBackend::new(std::io::stdout())).unwrap();
+                    restore_terminal(&mut terminal).unwrap();
+                    let _ = quit::with_code(0);
+                },
+                _ => {}
+            }
+            // Handle email input in Auth state
+            if let AppState::Auth = app.state {
+                if app.email_input.handle_key(&key) {
+                    // Enter pressed in email input
+                    println!("User entered: {}", app.email_input.input);
+                    app.email_input.input.clear();
+                    app.email_input.reset_cursor();
+                    app.email_input.set_mode(crate::ui_tooling::text_input::InputMode::Normal);
                 }
             }
-            Ok(false) => {
-                // No events available, continue
-            }
-            Err(e) => {
-                eprintln!("Failed to poll for events: {}", e);
-                break;
-            }
         }
-
-        // Update application state (called on each iteration)
-        app.tick();
     }
 
-    // ========================================================================
-    // CLEANUP
-    // ========================================================================
-    
-    // Restore terminal state
-    disable_raw_mode().context("Failed to disable raw mode")?;
-    execute!(
-        io::stdout(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )
-    .context("Failed to restore terminal state")?;
 
+    disable_raw_mode()?;
     Ok(())
+}
+
+pub fn restore_terminal(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> io::Result<()> {
+    // Reset terminal state
+    execute!(stdout(), Clear(ClearType::All))?;
+    disable_raw_mode()?;
+    execute!(stdout(), LeaveAlternateScreen)?;
+    terminal.show_cursor()?;
+    Ok(())
+}
+
+/// Draws the main menu
+fn main_menu(f: &mut Frame<>, app: &App) {
+    // Split the screen vertically: title (20%), menu (60%), footer (20%)
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage(5),
+            Constraint::Percentage(75),
+            Constraint::Percentage(20),
+        ])
+        .split(f.area());
+
+    // Title block
+    let title = Paragraph::new("Main Menu")
+        .block(Block::default().borders(Borders::ALL).title("Welcome"))
+        .style(Style::default().fg(Color::Yellow));
+    f.render_widget(title, chunks[0]);
+
+    // Menu list
+    let items: Vec<ListItem> = MENU_ITEMS
+        .iter()
+        .enumerate()
+        .map(|(i, &item)| {
+            let style = if i == app.selected {
+                Style::default().fg(Color::Black).bg(Color::White)
+            } else {
+                Style::default()
+            };
+            ListItem::new(item).style(style)
+        })
+        .collect();
+    let menu = List::new(items)
+        .block(Block::default().borders(Borders::ALL).title("Options"));
+    f.render_widget(menu, chunks[1]);
+
+    // Footer with navigation hint
+    let footer = Paragraph::new("↑/↓ to navigate, Enter to select, q to quit")
+        .block(Block::default().borders(Borders::ALL));
+    f.render_widget(footer, chunks[2]);
+}
+
+fn settings(f: &mut Frame<>, app: &App){
+    let vert_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage(50), 
+            Constraint::Percentage(50)])
+        .split(f.area());
+
+    let top_horiz_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage(50),
+            Constraint::Percentage(50),
+        ])
+        .split(vert_chunks[0]);
+    let bottom_horiz_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage(50),
+            Constraint::Percentage(50),
+        ])
+        .split(vert_chunks[1]);
+
+
+    let items: Vec<ListItem> = MENU_ITEMS
+    .iter()
+    .enumerate()
+    .map(|(i, &item)| {
+        let style = if i == app.selected {
+            Style::default().fg(Color::Black).bg(Color::White)
+        } else {
+            Style::default()
+        };
+        ListItem::new(item).style(style)
+    })
+    .collect();
+
+    f.render_widget(Paragraph::new("Top Left"), top_horiz_chunks[0]);
+    f.render_widget(Paragraph::new("Top Right"), top_horiz_chunks[1]);
+    f.render_widget(Paragraph::new("Bottom"), bottom_horiz_chunks[1]);
+
+    let menu = List::new(items)
+       .block(Block::default().borders(Borders::ALL).title("Options"));
+    f.render_widget(menu, bottom_horiz_chunks[0]);
+
+}
+
+fn pokedex(f: &mut Frame<>, app: &App){
+    let horiz_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(
+            [
+                Constraint::Percentage(50),
+                Constraint::Percentage(50),
+            ]
+        ).split(f.area());
+
+    let left_vert_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+                Constraint::Percentage(50),
+                Constraint::Percentage(50),
+            ]
+        ).split(horiz_chunks[0]);
+
+    
 }

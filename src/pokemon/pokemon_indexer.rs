@@ -7,13 +7,21 @@ use crate::serde_handler;
 #[derive(Deserialize)]
 pub struct PokemonStatBlock {
     pub number: String,
+    #[serde(rename = "HP")]
     pub hp: String,
+    #[serde(rename = "Attack")]
     pub attack: String,
+    #[serde(rename = "Defense")]
     pub defense: String,
+    #[serde(rename = "SpAttack")]
     pub sp_attack: String,
+    #[serde(rename = "SpDefense")]
     pub sp_defense: String,
+    #[serde(rename = "Speed")]
     pub speed: String,
+    #[serde(rename = "Type1")]
     pub type1: String,
+    #[serde(rename = "Type2")]
     pub type2: String, // "none" will be stored as a string here
 }
 

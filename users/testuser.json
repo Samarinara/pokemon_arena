@@ -1,0 +1,11 @@
+{
+  "username": "testuser",
+  "email": "test@example.com",
+  "pokemon_list": [
+    "Bulbasaur",
+    "Charmander",
+    "Squirtle"
+  ],
+  "created_at": "2025-06-28T09:40:38.462411",
+  "last_login": "2025-06-28T09:40:38.462421"
+}

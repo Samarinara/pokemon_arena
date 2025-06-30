@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 # Core ratatui library for building terminal user interfaces
-ratatui = "0.27.0"
+ratatui = "0.29.0"
 
 # Terminal backend for ratatui - handles raw terminal mode, input, and output
 crossterm = "0.28.0"
@@ -19,3 +19,16 @@ tokio = { version = "1.0", features = ["full"] }
 # Serialize and Deserialize jsons
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+
+# Random number generation for verification codes
+rand = "0.8"
+
+# Date and time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# Simple Quitting
+quit = "2.0.0"
+
+# Text input widget
+rat-text = "1.0.5"
+color-eyre = "0.6.5"
