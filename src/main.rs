@@ -1,3 +1,4 @@
+use tokio::sync::mpsc;
 use ratatui::{
     backend::CrosstermBackend, layout::{Constraint, Direction, Layout}, style::{Color, Style}, widgets::{Block, Borders, List, ListItem, Paragraph}, Frame, Terminal
 };
@@ -5,6 +6,7 @@ use crossterm::{
     event::{self, Event, KeyCode}, execute, terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType, LeaveAlternateScreen}
 };
 use std::io::{self, stdout, Stdout};
+use std::time::Duration;
 
 
 use tracing_subscriber::{fmt, prelude::*};
@@ -29,10 +31,11 @@ use crate::menus::auth_menu;
 /// Menu items to display
 const MENU_ITEMS: &[&str] = &["Start", "Settings", "Pokedex", "Quit"];
 
-use tracing::{info, error, warn};
+use tracing::{info};
 use crossterm::tty::IsTty;
 
 /// Application state
+#[derive(Clone)]
 pub struct App {
     selected: usize, // Index of the selected menu item
     state: AppState,
@@ -58,16 +61,15 @@ pub enum AuthState {
 #[quit::main]
 #[tokio::main]
 async fn main() -> Result<(), io::Error> {
-    if !stdout().is_tty() {
-        eprintln!("This application requires an interactive terminal.");
-        std::process::exit(1);
-    }
+    
     // Terminal setup
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     let backend = CrosstermBackend::new(&mut stdout);
     let mut terminal = Terminal::new(backend)?;
 
+    terminal.clear()?;
+    
     //logs
     let file = std::fs::File::create("tracing.log")?;
     let (non_blocking_writer, _guard) = tracing_appender::non_blocking(file);
@@ -83,100 +85,108 @@ async fn main() -> Result<(), io::Error> {
         email_input: crate::ui_tooling::text_input::TextInputWidgetState::new(),
     };
 
+    let (tx, mut rx) = mpsc::channel(1);
+
     // Main event loop
     loop {
-        terminal.clear()?;
+        if let Ok(new_app) = rx.try_recv() {
+            app = new_app;
+        }
+
         terminal.draw(|f| match app.state {
             AppState::MainMenu => main_menu(f, &app),
             AppState::Settings => settings(f, &app),
             AppState::Auth => auth_menu::menu(f, &app),
         })?;
 
-        if let Event::Key(key) = event::read()? {
-            info!(?key, "Key event received");
-            let mut should_quit = false;
-            if app.state == AppState::Auth {
-                let menu_size = match app.auth_state {
-                    AuthState::InputEmail => 2, // "Send", "Exit"
-                    AuthState::VerifyEmail => 4, // "Submit", "Resend", "Change", "Exit"
-                };
-                clamp_selection(&mut app, menu_size); // Clamp selection before handling input
+        if event::poll(Duration::from_millis(100))? {
+            if let Event::Key(key) = event::read()? {
+                info!(?key, "Key event received");
+                let mut should_quit = false;
+                if app.state == AppState::Auth {
+                    let menu_size = match app.auth_state {
+                        AuthState::InputEmail => 2, // "Send", "Exit"
+                        AuthState::VerifyEmail => 4, // "Submit", "Resend", "Change", "Exit"
+                    };
+                    clamp_selection(&mut app, menu_size); // Clamp selection before handling input
 
-                info!("Auth state key event");
-                // Auth state has special input handling due to the text field
-                if app.email_input.mode == crate::ui_tooling::text_input::InputMode::Editing {
-                    info!("Editing mode key event");
-                    // In editing mode, keys control the text input
-                    match key.code {
-                        KeyCode::Enter | KeyCode::Tab | KeyCode::Esc => {
-                            info!("Exiting editing mode");
-                            app.email_input.set_mode(crate::ui_tooling::text_input::InputMode::Normal);
+                    info!("Auth state key event");
+                    // Auth state has special input handling due to the text field
+                    if app.email_input.mode == crate::ui_tooling::text_input::InputMode::Editing {
+                        info!("Editing mode key event");
+                        // In editing mode, keys control the text input
+                        match key.code {
+                            KeyCode::Enter | KeyCode::Tab | KeyCode::Esc => {
+                                info!("Exiting editing mode");
+                                app.email_input.set_mode(crate::ui_tooling::text_input::InputMode::Normal);
+                            }
+                            _ => {
+                                // Pass other keys to the input handler
+                                info!("Passing key to input handler");
+                                app.email_input.handle_key(&key);
+                            }
                         }
-                        _ => {
-                            // Pass other keys to the input handler
-                            info!("Passing key to input handler");
-                            app.email_input.handle_key(&key);
+                    } else {
+                        info!("Normal mode key event");
+                        // In normal mode, keys control the menu
+                        match key.code {
+                            KeyCode::Up => {
+                                info!("Moving selection up");
+                                app.selected = app.selected.saturating_sub(1);
+                            }
+                            KeyCode::Down => {
+                                info!("Moving selection down");
+                                app.selected = app.selected.saturating_add(1);
+                            } 
+                            KeyCode::Enter => {
+                                info!("Enter key pressed in normal mode");
+                                let mut app_clone = app.clone();
+                                let tx_clone = tx.clone();
+                                tokio::spawn(async move {
+                                    auth_menu::input(&mut app_clone).await;
+                                    let _ = tx_clone.send(app_clone).await;
+                                });
+                            }
+                            KeyCode::Tab => {
+                                info!("Entering editing mode");
+                                app.email_input.set_mode(crate::ui_tooling::text_input::InputMode::Editing);
+                            }
+                            KeyCode::Esc => {
+                                info!("Escape key pressed, quitting");
+                                should_quit = true;
+                            }
+                            _ => {}
                         }
                     }
                 } else {
-                    info!("Normal mode key event");
-                    // In normal mode, keys control the menu
+                    info!("Other state key event");
+                    // Standard menu handling for other states
                     match key.code {
-                        KeyCode::Up => {
-                            info!("Moving selection up");
-                            app.selected = app.selected.saturating_sub(1);
-                        }
-                        KeyCode::Down => {
-                            info!("Moving selection down");
-                            app.selected = app.selected.saturating_add(1);
-                        }
+                        KeyCode::Up => app.selected = app.selected.saturating_sub(1),
+                        KeyCode::Down => app.selected = app.selected.saturating_add(1),
                         KeyCode::Enter => {
-                            info!("Enter key pressed in normal mode");
-                            auth_menu::input(&mut app);
+                            if let AppState::MainMenu = app.state {
+                                match app.selected {
+                                    1 => app.state = AppState::Settings,
+                                    3 => should_quit = true,
+                                    _ => {}
+                                }
+                            }
                         }
-                        KeyCode::Tab => {
-                            info!("Entering editing mode");
-                            app.email_input.set_mode(crate::ui_tooling::text_input::InputMode::Editing);
-                        }
-                        KeyCode::Esc => {
-                            info!("Escape key pressed, quitting");
-                            should_quit = true;
-                        }
+                        KeyCode::Esc => should_quit = true,
                         _ => {}
                     }
                 }
-            } else {
-                info!("Other state key event");
-                // Standard menu handling for other states
-                match key.code {
-                    KeyCode::Up => app.selected = app.selected.saturating_sub(1),
-                    KeyCode::Down => app.selected = app.selected.saturating_add(1),
-                    KeyCode::Enter => {
-                        if let AppState::MainMenu = app.state {
-                            match app.selected {
-                                1 => app.state = AppState::Settings,
-                                3 => should_quit = true,
-                                _ => {}
-                            }
-                        }
-                    }
-                    KeyCode::Esc => should_quit = true,
-                    _ => {}
-                }
-            }
 
-            if should_quit {
-                info!("Quitting application");
-                let mut terminal = Terminal::new(CrosstermBackend::new(std::io::stdout())).unwrap();
-                restore_terminal(&mut terminal).unwrap();
-                let _ = quit::with_code(0);
+                if should_quit {
+                    info!("Quitting application");
+                    let mut terminal = Terminal::new(CrosstermBackend::new(std::io::stdout())).unwrap();
+                    restore_terminal(&mut terminal).unwrap();
+                    let _ = quit::with_code(0);
+                }
             }
         }
     }
-
-
-    disable_raw_mode()?;
-    Ok(())
 }
 
 pub fn restore_terminal(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> io::Result<()> {

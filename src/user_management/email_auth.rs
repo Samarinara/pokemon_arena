@@ -1,38 +1,36 @@
-use lettre::message::header::ContentType;
+use std::collections::HashMap;
+use lettre::message::{header::ContentType, Mailbox, Message};
 use lettre::transport::smtp::authentication::Credentials;
-use lettre::{Message, SmtpTransport, Transport, message::Mailbox};
+use lettre::{AsyncSmtpTransport, AsyncTransport, Tokio1Executor};
+use serde_json;
+use crate::serde_handler;
 
-use keyring::{self, Error};
 
+pub async fn send_auth_email(key: String, email: &str) -> Result<(), Box<dyn std::error::Error>> {
+    // Load credentials
+    let creds: HashMap<String, String> = serde_json::from_str(&serde_handler::load_json("cred.json").await)?;
+    let username = creds.get("uname").ok_or("Missing uname")?;
+    let password = creds.get("pwd").ok_or("Missing pwd")?;
 
-pub fn send_auth_email(key: &str, email: &str){
-    let uname = "pokemon.arena.ssh@gmail.com";
-    let mut pwd = String::new();
-
-    let email = Message::builder()
-        .from(Mailbox::new(Some("NoBody".to_owned()), uname.parse().unwrap())) 
-        .to(Mailbox::new(Some("Hei".to_owned()), email.parse().unwrap())) // This is the recipient
-        .subject("Happy new year")
+    // Build email
+    let email_message = Message::builder()
+        .from(username.parse::<Mailbox>()?)
+        .to(email.parse::<Mailbox>()?)
+        .subject("Pokemon Arena Verification")
         .header(ContentType::TEXT_PLAIN)
-        .body(String::from("Hello Email!"))
-        .unwrap();
+        .body(String::from("Your code is: ".to_string() + &key))?;
 
-    let creds = Credentials::new("smtp_username".to_owned(), pwd);
-
-    // Open a remote connection to gmail
-    let mailer = SmtpTransport::relay("smtp.gmail.com")
-        .unwrap()
+    // SMTP credentials and transport
+    let creds = Credentials::new(username.to_string(), password.to_string());
+    let mailer: AsyncSmtpTransport<Tokio1Executor> = AsyncSmtpTransport::<Tokio1Executor>::relay("smtp.gmail.com")?
         .credentials(creds)
         .build();
 
-    // Send the email
-    match mailer.send(&email) {
-        Ok(_) => println!("Email sent successfully!"),
-        Err(e) => panic!("Could not send email: {e:?}"),
-    }
+    // Send
+    mailer.send(email_message).await?;
+    Ok(())
 }
 
 pub fn verify_email(_key: &str, _email: &str) -> bool {
-    // In the future, this will verify the key
     true
 }

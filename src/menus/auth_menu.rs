@@ -6,12 +6,14 @@ use ratatui::{
     Frame, 
     Terminal
 };
-use std::sync::{LazyLock, Mutex};
+
 
 use crate::user_management::email_auth::{send_auth_email, verify_email};
 use crate::{App as MainApp, AppState, AuthState}; // NEW: Import AuthState
 use crate::restore_terminal;
 use crate::ui_tooling::text_input::draw_text_input;
+use crate::pokemon::pokemon_indexer;
+use rand::Rng;
 
 pub fn menu(f: &mut Frame<'_>, app: &MainApp) {
     match app.auth_state {
@@ -20,22 +22,26 @@ pub fn menu(f: &mut Frame<'_>, app: &MainApp) {
     }
 }
 
-pub fn input(app: &mut MainApp){
+pub async fn input(app: &mut MainApp){
     info!("auth_menu::input called");
     match app.auth_state {
-        AuthState::InputEmail => input_email(app),
-        AuthState::VerifyEmail => input_key(app),
+        AuthState::InputEmail => input_email(app).await,
+        AuthState::VerifyEmail => input_key(app).await,
     }
 }
 
-fn input_email(app: &mut MainApp) {
+async fn input_email(app: &mut MainApp) {
     info!("input_email called");
     match app.selected {
         0 => { // Send Email
             info!("Sending verification email");
-            send_auth_email("1234", &app.email_input.input.to_string());
-            app.auth_state = AuthState::VerifyEmail; // NEW: Update auth state
-            app.selected = 0; // Reset selection for the new menu
+            let rng = rand::thread_rng().gen_range(0..=151);
+            let pokemon_name = pokemon_indexer::get_pokemon_by_number(rng).await;
+            if let Err(e) = send_auth_email(pokemon_name, &app.email_input.input.to_string()).await {
+                error!("Failed to send email: {}", e);
+            }
+            app.auth_state = AuthState::VerifyEmail;
+            app.selected = 0;
         }
         1 => { // Exit
             info!("Exiting from input_email");
@@ -47,13 +53,16 @@ fn input_email(app: &mut MainApp) {
     }
 }
 
-fn input_key(app: &mut MainApp) {
+async fn input_key(app: &mut MainApp) {
     info!("input_key called");
     match app.selected {
         0 => { // Submit
             info!("Submit button pressed");
             if verify_email(&app.email_input.input.to_string(), &app.email_input.input.to_string()) {
                 info!("Email verified, changing state to MainMenu");
+/*                 if let Err(e) = send_auth_email(pokemon_indexer::get_pokemon_by_number(1).await, "goatloard999@gmail.com").await {
+                    error!("Failed to send email: {}", e);
+                } */
                 app.state = AppState::MainMenu;
             } else {
                 warn!("Email verification failed");
@@ -61,11 +70,13 @@ fn input_key(app: &mut MainApp) {
         }
         1 => { // Resend Email
             info!("Resend Email button pressed");
-            send_auth_email("1234", &app.email_input.input.to_string());
+/*             if let Err(e) = send_auth_email("1234".to_string(), &app.email_input.input.to_string()).await {
+                error!("Failed to send email: {}", e);
+            } */
         }
         2 => { // Change Email
             info!("Change Email button pressed");
-            app.auth_state = AuthState::InputEmail; // NEW: Update auth state
+            app.auth_state = AuthState::InputEmail;
         }
         3 => { // Exit
             info!("Exiting from input_key");

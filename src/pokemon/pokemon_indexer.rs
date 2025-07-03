@@ -25,9 +25,9 @@ pub struct PokemonStatBlock {
     pub type2: String, // "none" will be stored as a string here
 }
 
-pub fn get_pokemon_by_number(number: i32) -> String {
+pub async fn get_pokemon_by_number(number: i32) -> String {
     // Try to load the Pokemon data, return a fallback if it fails
-    let json_data = match std::fs::read_to_string("src/pokemon/pokemon_by_number.json") {
+    let json_data = match tokio::fs::read_to_string("src/pokemon/pokemon_by_number.json").await {
         Ok(data) => data,
         Err(_) => return format!("Pokemon #{}", number),
     };
@@ -43,9 +43,9 @@ pub fn get_pokemon_by_number(number: i32) -> String {
     }
 }
 
-pub fn get_pokemon_stat_block(name: &str) -> Option<PokemonStatBlock> {
+pub async fn get_pokemon_stat_block(name: &str) -> Option<PokemonStatBlock> {
     // Try to load the Pokemon stats data, return None if it fails
-    let json_data = match std::fs::read_to_string("src/pokemon/pokemon_stats.json") {
+    let json_data = match tokio::fs::read_to_string("src/pokemon/pokemon_stats.json").await {
         Ok(data) => data,
         Err(_) => return None,
     };
@@ -58,9 +58,9 @@ pub fn get_pokemon_stat_block(name: &str) -> Option<PokemonStatBlock> {
     index.remove(name)
 }
 
-pub fn get_random_pokemon() -> String {
+pub async fn get_random_pokemon() -> String {
     // Try to load the Pokemon data, return a fallback if it fails
-    let json_data = match std::fs::read_to_string("src/pokemon/pokemon_by_number.json") {
+    let json_data = match tokio::fs::read_to_string("src/pokemon/pokemon_by_number.json").await {
         Ok(data) => data, 
         Err(_) => return "Unknown Pokemon".to_string(), // Fallback to a generic string
     };
