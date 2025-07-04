@@ -1,4 +1,3 @@
-use tokio::sync::mpsc;
 use ratatui::{
     backend::CrosstermBackend, layout::{Constraint, Direction, Layout}, style::{Color, Style}, widgets::{Block, Borders, List, ListItem, Paragraph}, Frame, Terminal
 };
@@ -32,15 +31,19 @@ use crate::menus::auth_menu;
 const MENU_ITEMS: &[&str] = &["Start", "Settings", "Pokedex", "Quit"];
 
 use tracing::{info};
-use crossterm::tty::IsTty;
 
 /// Application state
 #[derive(Clone)]
 pub struct App {
     selected: usize, // Index of the selected menu item
     state: AppState,
+
+    //for auth
     auth_state: AuthState, // NEW: Manages auth sub-state
     pub email_input: crate::ui_tooling::text_input::TextInputWidgetState,
+    pub user_email: String,
+    pub verification_code: String,
+    pub strikes: i32,
 }
 
 #[derive(PartialEq, Clone, Copy)] // NEW: Added derive for state comparison
@@ -56,6 +59,7 @@ pub enum AppState {
 pub enum AuthState {
     InputEmail,
     VerifyEmail,
+    LoggedIn,
 }
 
 #[quit::main]
@@ -83,9 +87,12 @@ async fn main() -> Result<(), io::Error> {
         state: AppState::Auth,
         auth_state: AuthState::InputEmail, // NEW: Initialize auth state
         email_input: crate::ui_tooling::text_input::TextInputWidgetState::new(),
+        user_email: String::new(),
+        verification_code: String::new(),
+        strikes: 0,
     };
 
-    let (tx, mut rx) = mpsc::channel(1);
+    let (tx, mut rx) = tokio::sync::mpsc::channel(1);
 
     // Main event loop
     loop {
@@ -107,6 +114,7 @@ async fn main() -> Result<(), io::Error> {
                     let menu_size = match app.auth_state {
                         AuthState::InputEmail => 2, // "Send", "Exit"
                         AuthState::VerifyEmail => 4, // "Submit", "Resend", "Change", "Exit"
+                        AuthState::LoggedIn => 1, // "Exit"
                     };
                     clamp_selection(&mut app, menu_size); // Clamp selection before handling input
 
@@ -286,7 +294,7 @@ fn settings(f: &mut Frame<>, app: &App){
 
 }
 
-fn pokedex(f: &mut Frame<>, app: &App){
+fn pokedex(f: &mut Frame<>, _app: &App){
     let horiz_chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(
@@ -296,7 +304,7 @@ fn pokedex(f: &mut Frame<>, app: &App){
             ]
         ).split(f.area());
 
-    let left_vert_chunks = Layout::default()
+    let _left_vert_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints(
             [

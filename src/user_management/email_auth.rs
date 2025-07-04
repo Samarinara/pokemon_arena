@@ -4,11 +4,20 @@ use lettre::transport::smtp::authentication::Credentials;
 use lettre::{AsyncSmtpTransport, AsyncTransport, Tokio1Executor};
 use serde_json;
 use crate::serde_handler;
+use tracing::error;
 
 
 pub async fn send_auth_email(key: String, email: &str) -> Result<(), Box<dyn std::error::Error>> {
     // Load credentials
-    let creds: HashMap<String, String> = serde_json::from_str(&serde_handler::load_json("cred.json").await)?;
+    let creds_json = match serde_handler::load_json("cred.json").await {
+        Ok(json) => json,
+        Err(_) => {
+            error!("'cred.json' not found. Please create it with 'uname' and 'pwd' fields.");
+            return Err("Missing credentials file".into());
+        }
+    };
+
+    let creds: HashMap<String, String> = serde_json::from_str(&creds_json)?;
     let username = creds.get("uname").ok_or("Missing uname")?;
     let password = creds.get("pwd").ok_or("Missing pwd")?;
 
@@ -18,7 +27,7 @@ pub async fn send_auth_email(key: String, email: &str) -> Result<(), Box<dyn std
         .to(email.parse::<Mailbox>()?)
         .subject("Pokemon Arena Verification")
         .header(ContentType::TEXT_PLAIN)
-        .body(String::from("Your code is: ".to_string() + &key))?;
+        .body(String::from("Your code is: ".to_string() + &key ))?;
 
     // SMTP credentials and transport
     let creds = Credentials::new(username.to_string(), password.to_string());
@@ -31,6 +40,9 @@ pub async fn send_auth_email(key: String, email: &str) -> Result<(), Box<dyn std
     Ok(())
 }
 
-pub fn verify_email(_key: &str, _email: &str) -> bool {
-    true
+pub fn verify_email(key: &str, email: &str, input: &str) -> bool {
+    if key == input{
+        return true;
+    }
+    return false;
 }
