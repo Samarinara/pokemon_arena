@@ -1,151 +1,45 @@
-[2m2025-07-04T18:20:11.018084Z[0m [35mTRACE[0m [2mmio::poll[0m[2m:[0m registering event source with poller: token=Token(0), interests=READABLE    
-[2m2025-07-04T18:20:11.018326Z[0m [35mTRACE[0m [2mmio::poll[0m[2m:[0m registering event source with poller: token=Token(1), interests=READABLE    
-[2m2025-07-04T18:20:12.698917Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Tab, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:12.698999Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:12.699013Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
-[2m2025-07-04T18:20:12.699024Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Entering editing mode
-[2m2025-07-04T18:20:13.283472Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('g'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:13.283541Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:13.283556Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:13.283565Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:13.450262Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('o'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:13.450344Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:13.450355Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:13.450362Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:13.545922Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('a'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:13.546038Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:13.546050Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:13.546058Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:13.765173Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('t'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:13.765235Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:13.765245Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:13.765251Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:13.907456Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('l'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:13.907504Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:13.907515Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:13.907522Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:14.048088Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('o'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:14.048141Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:14.048151Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:14.048158Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:14.170118Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('a'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:14.170167Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:14.170176Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:14.170183Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:14.323691Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('r'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:14.323747Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:14.323757Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:14.323764Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:14.586454Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('d'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:14.586524Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:14.586534Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:14.586542Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:14.932387Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('9'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:14.932446Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:14.932455Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:14.932461Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:15.072015Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('9'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:15.072073Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:15.072083Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:15.072090Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:15.188852Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('9'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:15.188932Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:15.188944Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:15.188953Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:15.582757Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('@'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:15.582834Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:15.582845Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:15.582853Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:15.825112Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('g'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:15.825174Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:15.825184Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:15.825192Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:15.966529Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('m'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:15.966592Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:15.966602Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:15.966610Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:16.078451Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('a'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:16.078485Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:16.078493Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:16.078498Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:16.175094Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('i'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:16.175178Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:16.175189Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:16.175197Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:16.358343Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('l'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:16.358407Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:16.358417Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:16.358425Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:16.544093Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('.'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:16.544152Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:16.544162Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:16.544169Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:16.741277Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('c'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:16.741341Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:16.741351Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:16.741359Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:16.863666Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('o'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:16.863708Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:16.863718Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:16.863725Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:16.968104Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Char('m'), modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:16.968151Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:16.968161Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:16.968168Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Passing key to input handler
-[2m2025-07-04T18:20:17.444995Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Enter, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:17.445062Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:17.445072Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Editing mode key event
-[2m2025-07-04T18:20:17.445084Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Exiting editing mode
-[2m2025-07-04T18:20:18.038822Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Enter, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:18.038897Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:18.038907Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
-[2m2025-07-04T18:20:18.038919Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Enter key pressed in normal mode
-[2m2025-07-04T18:20:18.039097Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m auth_menu::input called
-[2m2025-07-04T18:20:18.039145Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m input_email called
-[2m2025-07-04T18:20:18.039171Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m Sending verification email
-[2m2025-07-04T18:20:18.097612Z[0m [35mTRACE[0m [2mmio::poll[0m[2m:[0m registering event source with poller: token=Token(139793066762496), interests=READABLE | WRITABLE    
-[2m2025-07-04T18:20:19.171338Z[0m [35mTRACE[0m [2mmio::poll[0m[2m:[0m deregistering event source from poller    
-[2m2025-07-04T18:20:21.340319Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Enter, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:21.340385Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:21.340394Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
-[2m2025-07-04T18:20:21.340401Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Enter key pressed in normal mode
-[2m2025-07-04T18:20:21.340552Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m auth_menu::input called
-[2m2025-07-04T18:20:21.340594Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m input_key called
-[2m2025-07-04T18:20:21.340607Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m Submit button pressed
-[2m2025-07-04T18:20:21.784707Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Enter, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:21.784776Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:21.784786Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
-[2m2025-07-04T18:20:21.784794Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Enter key pressed in normal mode
-[2m2025-07-04T18:20:21.784950Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m auth_menu::input called
-[2m2025-07-04T18:20:21.784981Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m input_key called
-[2m2025-07-04T18:20:21.784993Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m Submit button pressed
-[2m2025-07-04T18:20:22.200624Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Enter, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:22.200689Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:22.200699Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
-[2m2025-07-04T18:20:22.200708Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Enter key pressed in normal mode
-[2m2025-07-04T18:20:22.200857Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m auth_menu::input called
-[2m2025-07-04T18:20:22.200878Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m input_key called
-[2m2025-07-04T18:20:22.200888Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m Submit button pressed
-[2m2025-07-04T18:20:22.827823Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Enter, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:20:22.827908Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:20:22.827919Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
-[2m2025-07-04T18:20:22.827928Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Enter key pressed in normal mode
-[2m2025-07-04T18:20:22.828076Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m auth_menu::input called
-[2m2025-07-04T18:20:22.828118Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m input_key called
-[2m2025-07-04T18:20:22.828134Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m Submit button pressed
-[2m2025-07-04T18:28:15.144654Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Down, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:28:15.144738Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:28:15.144748Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
-[2m2025-07-04T18:28:15.144761Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Moving selection down
-[2m2025-07-04T18:28:15.658766Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Enter, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:28:15.658843Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:28:15.658852Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
-[2m2025-07-04T18:28:15.658858Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Enter key pressed in normal mode
-[2m2025-07-04T18:28:15.659007Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m auth_menu::input called
-[2m2025-07-04T18:28:15.659042Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m input_email called
-[2m2025-07-04T18:28:15.659061Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m Exiting from input_email
-[2m2025-07-04T18:28:17.382658Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Esc, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
-[2m2025-07-04T18:28:17.382743Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
-[2m2025-07-04T18:28:17.382756Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
-[2m2025-07-04T18:28:17.382774Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Escape key pressed, quitting
-[2m2025-07-04T18:28:17.382787Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Quitting application
+[2m2025-07-06T23:13:22.912272Z[0m [35mTRACE[0m [2mmio::poll[0m[2m:[0m registering event source with poller: token=Token(0), interests=READABLE    
+[2m2025-07-06T23:13:22.912487Z[0m [35mTRACE[0m [2mmio::poll[0m[2m:[0m registering event source with poller: token=Token(1), interests=READABLE    
+[2m2025-07-06T23:13:43.879996Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Down, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
+[2m2025-07-06T23:13:43.880078Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
+[2m2025-07-06T23:13:43.880086Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
+[2m2025-07-06T23:13:43.880093Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Moving selection down
+[2m2025-07-06T23:13:44.883627Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Down, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
+[2m2025-07-06T23:13:44.883716Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
+[2m2025-07-06T23:13:44.883723Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
+[2m2025-07-06T23:13:44.883730Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Moving selection down
+[2m2025-07-06T23:13:45.886009Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Up, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
+[2m2025-07-06T23:13:45.886078Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
+[2m2025-07-06T23:13:45.886086Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
+[2m2025-07-06T23:13:45.886097Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Moving selection up
+[2m2025-07-06T23:13:46.889782Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Down, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
+[2m2025-07-06T23:13:46.889851Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
+[2m2025-07-06T23:13:46.889860Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
+[2m2025-07-06T23:13:46.889866Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Moving selection down
+[2m2025-07-06T23:13:47.893361Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Up, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
+[2m2025-07-06T23:13:47.893437Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
+[2m2025-07-06T23:13:47.893445Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
+[2m2025-07-06T23:13:47.893450Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Moving selection up
+[2m2025-07-06T23:13:48.896788Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Up, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
+[2m2025-07-06T23:13:48.896857Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
+[2m2025-07-06T23:13:48.896865Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
+[2m2025-07-06T23:13:48.896871Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Moving selection up
+[2m2025-07-06T23:13:49.900493Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Down, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
+[2m2025-07-06T23:13:49.900567Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
+[2m2025-07-06T23:13:49.900576Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
+[2m2025-07-06T23:13:49.900583Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Moving selection down
+[2m2025-07-06T23:13:50.903176Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Up, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
+[2m2025-07-06T23:13:50.903246Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
+[2m2025-07-06T23:13:50.903254Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
+[2m2025-07-06T23:13:50.903259Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Moving selection up
+[2m2025-07-06T23:13:51.906779Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Down, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
+[2m2025-07-06T23:13:51.906849Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
+[2m2025-07-06T23:13:51.906856Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
+[2m2025-07-06T23:13:51.906862Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Moving selection down
+[2m2025-07-06T23:13:52.910517Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Enter, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
+[2m2025-07-06T23:13:52.910594Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
+[2m2025-07-06T23:13:52.910602Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
+[2m2025-07-06T23:13:52.910613Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Enter key pressed in normal mode
+[2m2025-07-06T23:13:52.910679Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m auth_menu::input called
+[2m2025-07-06T23:13:52.910693Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m input_email called
+[2m2025-07-06T23:13:52.910704Z[0m [32m INFO[0m [2mpokemon_arena::menus::auth_menu[0m[2m:[0m Exiting from input_email
