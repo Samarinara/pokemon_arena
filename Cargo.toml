@@ -46,3 +46,8 @@ native-tls = "0.2.14"
 
 # Storing Passwords where users can't find them
 keyring = "2.0"
+terminput = "0.5.1"
+russh-keys = "0.49.2"
+async-trait = "0.1.88"
+log = "0.4.27"
+russh = "0.53.0"

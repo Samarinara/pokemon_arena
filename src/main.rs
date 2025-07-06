@@ -6,6 +6,14 @@ use crossterm::{
 };
 use std::io::{self, stdout, Stdout};
 use std::time::Duration;
+use terminput::Event as TermEvent;
+
+use std::sync::Arc;
+use russh::{server::{self, Session}, Channel, ChannelId, CryptoVec};
+use async_trait::async_trait;
+use tokio::net::TcpListener;
+use std::collections::HashMap;
+
 
 
 use tracing_subscriber::{fmt, prelude::*};
@@ -62,6 +70,43 @@ pub enum AuthState {
     LoggedIn,
 }
 
+// MyHandler will contain per-client TUI state
+struct MyHandler {
+    // Add fields here to store TUI state for each client
+    client_id: usize, // A unique identifier for this client's session
+}
+
+// MyServer manages the overall SSH server and creates new handlers for clients
+#[derive(Clone)]
+struct MyServer {
+    next_client_id: Arc<tokio::sync::Mutex<usize>>, // Shared counter for client IDs
+}
+
+#[async_trait]
+impl server::Handler for MyHandler {
+    type Error = anyhow::Error; // Or a more specific error type if needed
+    // Implement methods required by the `russh::server::Handler` trait here
+}
+
+impl server::Server for MyServer {
+    type Handler = MyHandler;
+
+    fn new_client(&mut self, _addr: Option<std::net::SocketAddr>) -> Self::Handler {
+        // Increment client ID and create a new handler for each connection.
+        // A blocking_lock is used here as new_client is not an async method.
+        let mut next_id = self.next_client_id.blocking_lock();
+        let client_id = *next_id;
+        *next_id += 1;
+        println!("New client connected. Assigning ID: {}", client_id);
+        MyHandler { client_id }
+    }
+
+    // This method is invoked when a session encounters an error, allowing for custom error handling.
+    fn handle_session_error(&mut self, error: <Self::Handler as server::Handler>::Error) {
+        eprintln!("Server session error: {:?}", error);
+    }
+}
+
 #[quit::main]
 #[tokio::main]
 async fn main() -> Result<(), io::Error> {
@@ -93,6 +138,25 @@ async fn main() -> Result<(), io::Error> {
     };
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(1);
+
+    // Initialize SSH server 
+    let config = server::Config {
+        inactivity_timeout: Some(std::time::Duration::from_secs(3600)), // Set a 1-hour inactivity timeout
+        keys: vec![private_key], // Include the server's host key
+        auth_rejection_time: std::time::Duration::from_secs(3), // Delay authentication failures
+        auth_rejection_time_initial: Some(std::time::Duration::from_secs(0)), // No initial delay
+       ..Default::default()
+    };
+    let config = Arc::new(config);
+
+        // Initialize the MyServer instance, which will manage client handlers.
+    let my_server = MyServer {
+        next_client_id: Arc::new(tokio::sync::Mutex::new(0)),
+    };
+
+    // Start the SSH server, binding to all network interfaces on port 2222.
+    println!("SSH server listening on 0.0.0.0:2222");
+    russh::server::run_on_address(config, ("0.0.0.0", 2222), my_server).await?;
 
     // Main event loop
     loop {
@@ -196,6 +260,38 @@ async fn main() -> Result<(), io::Error> {
         }
     }
 }
+
+
+fn handle_input(mut channel_reader: impl std::io::Read) -> std::io::Result<()> {
+    let mut buf = [0u8; 64];
+    loop {
+        let n = channel_reader.read(&mut buf)?;
+        if n == 0 { break; }
+        let input = &buf[..n];
+
+        // Parse input bytes into events
+        match TermEvent::parse_from(input) {
+            Ok(Some(event)) => {
+                // Handle the event (key press, mouse, etc.)
+                println!("Parsed event: {:?}", event);
+            }
+            Ok(None) => {
+                // Need more bytes for a full event
+            }
+            Err(e) => {
+                eprintln!("Error parsing event: {:?}", e);
+            }
+        }
+    }
+    Ok(())
+}
+
+
+
+
+
+
+
 
 pub fn restore_terminal(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> io::Result<()> {
     // Reset terminal state
