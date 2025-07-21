@@ -1,29 +1,29 @@
+use std::path::Path;
+use std::fs;
+
 use rand::rngs::OsRng;
 use ratatui::{
     backend::CrosstermBackend, layout::{Constraint, Direction, Layout}, style::{Color, Style}, widgets::{Block, Borders, List, ListItem, Paragraph}, Frame, Terminal
 };
 use crossterm::{
-    event::{self, Event, KeyCode}, execute, terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType, LeaveAlternateScreen}
+    execute, terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType, LeaveAlternateScreen, EnterAlternateScreen}
 };
-use std::io::{self, stdout, Stdout};
-use std::time::Duration;
+use std::io::{self, Stdout};
 use std::collections::HashMap;
 
-
 use std::sync::Arc;
-
-use ratatui::layout::Rect;
-use ratatui::{TerminalOptions, Viewport};
-use russh::keys::ssh_key::{self, PublicKey};
-use russh::server::*;
-use russh::{Channel, ChannelId, Pty};
-use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 use tokio::sync::Mutex;
+
+use ratatui::{TerminalOptions, Viewport};
+use russh::keys::ssh_key::{self};
+use russh::server::*;
+use russh::{Channel, ChannelId, Pty, CryptoVec};
 
 use tracing_subscriber::{fmt, prelude::*};
 
 pub mod menus {
     pub mod auth_menu;
+    pub mod menu_system;
 }
 pub mod ui_tooling{
     pub mod text_input;
@@ -35,64 +35,66 @@ pub mod user_management {
     pub mod email_auth;
 }
 pub mod serde_handler;
+pub mod client_handler;
 
-use crate::menus::auth_menu;
+use crate::client_handler::{ClientHandler, TerminalHandle};
+use crate::menus::menu_system::MenuSystem;
 
-
-/// Menu items to display
-const MENU_ITEMS: &[&str] = &["Start", "Settings", "Pokedex", "Quit"];
-
-use tracing::{info};
-
-/// Application state
 #[derive(Clone)]
 pub struct App {
-    selected: usize, // Index of the selected menu item
+    selected: usize,
     state: AppState,
-
-    //for auth
-    auth_state: AuthState, // NEW: Manages auth sub-state
+    auth_state: AuthState,
     pub email_input: crate::ui_tooling::text_input::TextInputWidgetState,
     pub user_email: String,
     pub verification_code: String,
     pub strikes: i32,
 }
 
-#[derive(PartialEq, Clone, Copy)] // NEW: Added derive for state comparison
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum AppState {
     MainMenu,
     Settings,
+    Pokedex,
     Auth,
-    // Add other states (e.g., Game, Help, etc.)
 }
 
-// NEW: Enum for authentication sub-states
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum AuthState {
     InputEmail,
     VerifyEmail,
     LoggedIn,
 }
 
+
+
 #[tokio::main]
-async fn main() -> Result<(), io::Error> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize logging with console output for debugging
+    tracing_subscriber::fmt::init();
+    
+    println!("Starting SSH server...");
+    
     let mut server = AppServer::new();
-    server.run().await.expect("Failed running server");;
+    
+    // Add error handling and status reporting
+    match server.run().await {
+        Some(()) => {
+            println!("Server started successfully on 0.0.0.0:2222");
+            // Wait for the Ctrl+C signal
+            tokio::signal::ctrl_c().await?;
+            println!("Shutting down server...");
+            server.shutdown().await;
+        }
+        None => {
+            eprintln!("Failed to start server");
+        }
+    }
+    
     Ok(())
 }
 
-pub fn restore_terminal(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> io::Result<()> {
-    // Reset terminal state
-    execute!(stdout(), Clear(ClearType::All))?;
-    disable_raw_mode()?;
-    execute!(stdout(), LeaveAlternateScreen)?;
-    terminal.show_cursor()?;
-    Ok(())
-}
-
-/// Draws the main menu
 fn main_menu(f: &mut Frame<>, app: &App) {
-    // Split the screen vertically: title (20%), menu (60%), footer (20%)
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -102,33 +104,13 @@ fn main_menu(f: &mut Frame<>, app: &App) {
         ])
         .split(f.area());
 
-    // Title block
-    let title = Paragraph::new("Main Menu")
-        .block(Block::default().borders(Borders::ALL).title("Welcome"))
+    let menu = MenuSystem::get_current_menu(app.state, app.auth_state);
+    
+    let title = Paragraph::new("\n COMING SOON!!!\n\nPress Esc to quit")
+        .block(Block::default().borders(Borders::ALL).title("Main Menu"))
         .style(Style::default().fg(Color::Yellow));
-    f.render_widget(title, chunks[0]);
+    f.render_widget(title, chunks[1]);
 
-    // Menu list
-    let items: Vec<ListItem> = MENU_ITEMS
-        .iter()
-        .enumerate()
-        .map(|(i, &item)| {
-            let style = if i == app.selected {
-                Style::default().fg(Color::Black).bg(Color::White)
-            } else {
-                Style::default()
-            };
-            ListItem::new(item).style(style)
-        })
-        .collect();
-    let menu = List::new(items)
-        .block(Block::default().borders(Borders::ALL).title("Options"));
-    f.render_widget(menu, chunks[1]);
-
-    // Footer with navigation hint
-    let footer = Paragraph::new("↑/↓ to navigate, Enter to select, q to quit")
-        .block(Block::default().borders(Borders::ALL));
-    f.render_widget(footer, chunks[2]);
 }
 
 fn settings(f: &mut Frame<>, app: &App){
@@ -154,8 +136,8 @@ fn settings(f: &mut Frame<>, app: &App){
         ])
         .split(vert_chunks[1]);
 
-
-    let items: Vec<ListItem> = MENU_ITEMS
+    let menu = MenuSystem::get_current_menu(app.state, app.auth_state);
+    let items: Vec<ListItem> = menu.items
     .iter()
     .enumerate()
     .map(|(i, &item)| {
@@ -172,103 +154,54 @@ fn settings(f: &mut Frame<>, app: &App){
     f.render_widget(Paragraph::new("Top Right"), top_horiz_chunks[1]);
     f.render_widget(Paragraph::new("Bottom"), bottom_horiz_chunks[1]);
 
-    let menu = List::new(items)
+    let menu_widget = List::new(items)
        .block(Block::default().borders(Borders::ALL).title("Options"));
-    f.render_widget(menu, bottom_horiz_chunks[0]);
-
+    f.render_widget(menu_widget, bottom_horiz_chunks[0]);
 }
 
-fn pokedex(f: &mut Frame<>, _app: &App){
-    let horiz_chunks = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(
-            [
-                Constraint::Percentage(50),
-                Constraint::Percentage(50),
-            ]
-        ).split(f.area());
-
-    let _left_vert_chunks = Layout::default()
+fn pokedex(f: &mut Frame<>, app: &App){
+    let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints(
-            [
-                Constraint::Percentage(50),
-                Constraint::Percentage(50),
-            ]
-        ).split(horiz_chunks[0]);
+        .constraints([
+            Constraint::Percentage(10),
+            Constraint::Percentage(70),
+            Constraint::Percentage(20),
+        ])
+        .split(f.area());
 
+    let menu = MenuSystem::get_current_menu(app.state, app.auth_state);
     
+    let title = Paragraph::new(menu.title)
+        .block(Block::default().borders(Borders::ALL).title("Pokedex"))
+        .style(Style::default().fg(Color::Green));
+    f.render_widget(title, chunks[0]);
+
+    let items: Vec<ListItem> = menu.items
+        .iter()
+        .enumerate()
+        .map(|(i, &item)| {
+            let style = if i == app.selected {
+                Style::default().fg(Color::Black).bg(Color::White)
+            } else {
+                Style::default()
+            };
+            ListItem::new(item).style(style)
+        })
+        .collect();
+    let menu_widget = List::new(items)
+        .block(Block::default().borders(Borders::ALL).title("Options"));
+    f.render_widget(menu_widget, chunks[1]);
+
+    let footer = Paragraph::new("Use the arrow keys to navigate, Enter to select, and Esc to go back")
+        .block(Block::default().borders(Borders::ALL));
+    f.render_widget(footer, chunks[2]);
 }
 
-// NEW: Function to clamp the selected index
-fn clamp_selection(app: &mut App, menu_size: usize) {
-    if app.selected >= menu_size {
-        app.selected = menu_size - 1;
-    }
-}
 
-
-
-
-// All of the server logic is here
-struct ServerApp {
-    pub counter: usize,
-}
-
-impl ServerApp {
-    pub fn new() -> ServerApp {
-        Self { counter: 0 }
-    }
-}
-
-struct TerminalHandle {
-    sender: UnboundedSender<Vec<u8>>,
-    // The sink collects the data which is finally sent to sender.
-    sink: Vec<u8>,
-}
-
-impl TerminalHandle {
-    async fn start(handle: Handle, channel_id: ChannelId) -> Self {
-        let (sender, mut receiver) = unbounded_channel::<Vec<u8>>();
-        tokio::spawn(async move {
-            while let Some(data) = receiver.recv().await {
-                let result = handle.data(channel_id, data.into()).await;
-                if result.is_err() {
-                    eprintln!("Failed to send data: {:?}", result);
-                }
-            }
-        });
-        Self {
-            sender,
-            sink: Vec::new(),
-        }
-    }
-}
-
-// The crossterm backend writes to the terminal handle.
-impl std::io::Write for TerminalHandle {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.sink.extend_from_slice(buf);
-        Ok(buf.len())
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        let result = self.sender.send(self.sink.clone());
-        if result.is_err() {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::BrokenPipe,
-                result.unwrap_err(),
-            ));
-        }
-
-        self.sink.clear();
-        Ok(())
-    }
-}
 
 #[derive(Clone)]
 struct AppServer {
-    clients: Arc<Mutex<HashMap<usize, (Terminal<CrosstermBackend<TerminalHandle>>, ServerApp)>>>,
+    clients: Arc<Mutex<HashMap<usize, tokio::sync::mpsc::Sender<Vec<u8>>>>>,
     id: usize,
 }
 
@@ -281,173 +214,93 @@ impl AppServer {
     }
 
     pub async fn run(&mut self) -> Option<()> {
-        let clients = self.clients.clone();
-        tokio::spawn(async move {
-            // Pre loop setup
-
-            // Terminal setup
-            enable_raw_mode().unwrap();
-            let mut stdout = io::stdout();
-            let backend = CrosstermBackend::new(&mut stdout); // This line might still cause issues if `stdout` is not `Send` or `Sync`
-            let mut terminal = Terminal::new(backend);
-            
-            terminal.as_mut().unwrap().clear();
-            
-            //logs
-            let file = std::fs::File::create("tracing.log").unwrap();
-            let (non_blocking_writer, _guard) = tracing_appender::non_blocking(file);
-            tracing_subscriber::registry()
-                .with(fmt::layer().with_writer(non_blocking_writer)) // Use the non-blocking writer
-                .init();
-
-
-            let mut app = App {
-                selected: 0,
-                state: AppState::Auth,
-                auth_state: AuthState::InputEmail, // NEW: Initialize auth state
-                email_input: crate::ui_tooling::text_input::TextInputWidgetState::new(),
-                user_email: String::new(),
-                verification_code: String::new(),
-                strikes: 0,
-            };
-
-            let (tx, mut rx) = tokio::sync::mpsc::channel(1);
-
-    // Main event loop
-            loop {
-                tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-
-                        if let Ok(new_app) = rx.try_recv() {
-                            app = new_app;
-                        }           
-
-                terminal.as_mut().unwrap().draw(|f| match app.state {
-                    AppState::MainMenu => main_menu(f, &app),
-                    AppState::Settings => settings(f, &app),
-                    AppState::Auth => auth_menu::menu(f, &app), // This is the line that causes the error
-                }).expect("Failed to draw to terminal");
-
-                if event::poll(Duration::from_millis(100)).expect("Failed to poll events") { // Removed ?
-                    if let Event::Key(key) = event::read().expect("something went wrong reading the key") {
-                        info!(?key, "Key event received");
-                        let mut should_quit = false;
-                        if app.state == AppState::Auth {
-                            let menu_size = match app.auth_state {
-                                AuthState::InputEmail => 2, // "Send", "Exit"
-                                AuthState::VerifyEmail => 4, // "Submit", "Resend", "Change", "Exit"
-                                AuthState::LoggedIn => 1, // "Exit"
-                            };
-                            clamp_selection(&mut app, menu_size); // Clamp selection before handling input
-
-                            info!("Auth state key event");
-                            // Auth state has special input handling due to the text field
-                            if app.email_input.mode == crate::ui_tooling::text_input::InputMode::Editing {
-                                info!("Editing mode key event");
-                                // In editing mode, keys control the text input
-                                match key.code {
-                                    KeyCode::Enter | KeyCode::Tab | KeyCode::Esc => {
-                                        info!("Exiting editing mode");
-                                        app.email_input.set_mode(crate::ui_tooling::text_input::InputMode::Normal);
-                                    }
-                                    _ => {
-                                        // Pass other keys to the input handler
-                                        info!("Passing key to input handler");
-                                        app.email_input.handle_key(&key);
-                                    }
-                                }
-                            } else {
-                                info!("Normal mode key event");
-                                // In normal mode, keys control the menu
-                                match key.code {
-                                    KeyCode::Up => {
-                                        info!("Moving selection up");
-                                        app.selected = app.selected.saturating_sub(1);
-                                    }
-                                    KeyCode::Down => {
-                                        info!("Moving selection down");
-                                        app.selected = app.selected.saturating_add(1);
-                                    } 
-                                    KeyCode::Enter => {
-                                        info!("Enter key pressed in normal mode");
-                                        let mut app_clone = app.clone();
-                                        let tx_clone = tx.clone();
-                                        tokio::spawn(async move {
-                                            auth_menu::input(&mut app_clone).await;
-                                            let _ = tx_clone.send(app_clone).await;
-                                        });
-                                    }
-                                    KeyCode::Tab => {
-                                        info!("Entering editing mode");
-                                        app.email_input.set_mode(crate::ui_tooling::text_input::InputMode::Editing);
-                                    }
-                                    KeyCode::Esc => {
-                                        info!("Escape key pressed, quitting");
-                                        should_quit = true;
-                                    }
-                                    _ => {}
-                                }
-                            }
-                        } else {
-                            info!("Other state key event");
-                            // Standard menu handling for other states
-                            match key.code {
-                                KeyCode::Up => app.selected = app.selected.saturating_sub(1),
-                                KeyCode::Down => app.selected = app.selected.saturating_add(1),
-                                KeyCode::Enter => {
-                                    if let AppState::MainMenu = app.state {
-                                        match app.selected {
-                                            1 => app.state = AppState::Settings,
-                                            3 => should_quit = true,
-                                            _ => {}
-                                        }
-                                    }
-                                }
-                                KeyCode::Esc => should_quit = true,
-                                _ => {}
-                            }
-                        }
-
-                        if should_quit {
-                            info!("Quitting application");
-                            let mut terminal = Terminal::new(CrosstermBackend::new(std::io::stdout())).unwrap();
-                            restore_terminal(&mut terminal).unwrap();
-                            let _ = quit::with_code(0);
-                        }
-                    }
-                }
-
-
-                // Does something?
-                for (_, (terminal, app)) in clients.lock().await.iter_mut() {
-                    app.counter += 1;  
-                }
-            }
-        });
-
+        // Generate or load a persistent host key
+        let host_key = Self::get_or_create_host_key().await;
+        
         let config = Config {
             inactivity_timeout: Some(std::time::Duration::from_secs(3600)),
             auth_rejection_time: std::time::Duration::from_secs(3),
             auth_rejection_time_initial: Some(std::time::Duration::from_secs(0)),
-            keys: vec![
-                russh::keys::PrivateKey::random(&mut OsRng, ssh_key::Algorithm::Ed25519).unwrap(),
-            ],
+            keys: vec![host_key],
             nodelay: true,
             ..Default::default()
         };
 
-        let _ = self.run_on_address(Arc::new(config), ("0.0.0.0", 2222))
-            .await;
-
-        // The run_on_address method returns `Result<(), russh::Error>`, so we need to return `()`
-        // or handle the error. For now, we'll just return `Some(())` to match the `Option<()>` return type.
-        Some(())
+        println!("Attempting to bind to 0.0.0.0:2222...");
+        println!("You can connect with: ssh localhost -p 2222");
+        println!("Or: ssh user@localhost -p 2222");
         
+        match self.run_on_address(Arc::new(config), ("0.0.0.0", 2222)).await {
+            Ok(_) => {
+                println!("Server bound successfully and listening on port 2222");
+                Some(())
+            }
+            Err(e) => {
+                eprintln!("Failed to bind server: {:?}", e);
+                None
+            }
+        }
+    }
+
+    pub async fn shutdown(&mut self) {
+        let mut clients = self.clients.lock().await;
+        for (_, tx) in clients.iter() {
+            let _ = tx.send(vec![3]).await; // Ctrl+C
+        }
+        clients.clear();
+    }
+
+    async fn get_or_create_host_key() -> russh::keys::PrivateKey {
+        let key_path = "host_key.pem";
+        
+        if Path::new(key_path).exists() {
+            // Load existing key
+            match fs::read(key_path) {
+                Ok(key_data) => {
+                    match russh::keys::PrivateKey::from_openssh(&key_data) {
+                        Ok(key) => {
+                            println!("Loaded existing host key from {}", key_path);
+                            return key;
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to parse existing host key: {:?}", e);
+                            // Remove corrupted key file
+                            let _ = fs::remove_file(key_path);
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Failed to read host key file: {:?}", e);
+                }
+            }
+        }
+        
+        // Generate new key if loading failed or file doesn't exist
+        println!("Generating new host key...");
+        let key = russh::keys::PrivateKey::random(&mut OsRng, ssh_key::Algorithm::Ed25519).unwrap();
+        
+        // Save the key for future use
+        match key.to_openssh(ssh_key::LineEnding::LF) {
+            Ok(key_data) => {
+                if let Err(e) = fs::write(key_path, key_data) {
+                    eprintln!("Failed to save host key: {:?}", e);
+                } else {
+                    println!("Host key saved to {}", key_path);
+                }
+            }
+            Err(e) => {
+                eprintln!("Failed to serialize host key: {:?}", e);
+            }
+        }
+        
+        key
     }
 }
 
 impl Server for AppServer {
     type Handler = Self;
-    fn new_client(&mut self, _: Option<std::net::SocketAddr>) -> Self {
+    fn new_client(&mut self, addr: Option<std::net::SocketAddr>) -> Self {
+        println!("New client connected: {:?}", addr);
         let s = self.clone();
         self.id += 1;
         s
@@ -457,8 +310,20 @@ impl Server for AppServer {
 impl Handler for AppServer {
     type Error = anyhow::Error;
 
-    // Accept any connection without credentials
-    async fn auth_none(&mut self, _user: &str) -> Result<Auth, Self::Error> {
+    async fn auth_none(&mut self, user: &str) -> Result<Auth, Self::Error> {
+        println!("Authentication attempt from user: {}", user);
+        Ok(Auth::Accept)
+    }
+
+    // Accept password authentication (but don't actually check the password)
+    async fn auth_password(&mut self, user: &str, _password: &str) -> Result<Auth, Self::Error> {
+        println!("Password authentication attempt from user: {}", user);
+        Ok(Auth::Accept)
+    }
+
+    // Accept public key authentication (but don't actually verify the key)
+    async fn auth_publickey(&mut self, user: &str, _key: &russh::keys::PublicKey) -> Result<Auth, Self::Error> {
+        println!("Public key authentication attempt from user: {}", user);
         Ok(Auth::Accept)
     }
 
@@ -467,20 +332,67 @@ impl Handler for AppServer {
         channel: Channel<Msg>,
         session: &mut Session,
     ) -> Result<bool, Self::Error> {
-        let terminal_handle = TerminalHandle::start(session.handle(), channel.id()).await;
-
+        println!("Channel session opened for client {}", self.id);
+        
+        // Create a channel for input events with a larger buffer
+        let (tx_input, rx_input) = tokio::sync::mpsc::channel::<Vec<u8>>(1000);
+        let (tx_output, mut rx_output) = tokio::sync::mpsc::channel::<CryptoVec>(1000);
+        
+        // Store the input sender
+        let mut clients = self.clients.lock().await;
+        clients.insert(self.id, tx_input);
+        drop(clients); // Release the lock
+        
+        // Spawn a dedicated task for sending output over SSH
+        let russh_handle_clone = session.handle().clone();
+        let russh_channel_id_clone = channel.id();
+        tokio::spawn(async move {
+            while let Some(data) = rx_output.recv().await {
+                if let Err(e) = russh_handle_clone.data(russh_channel_id_clone, data).await {
+                    eprintln!("Error sending SSH channel data: {:?}", e);
+                }
+            }
+            println!("Output sender task ended for client {}", russh_channel_id_clone);
+        });
+        
+        let terminal_handle = TerminalHandle::start(tx_output.clone()).await;
         let backend = CrosstermBackend::new(terminal_handle);
 
-        // the correct viewport area will be set when the client request a pty
+        // Use a larger default size that's more likely to work with modern terminals
         let options = TerminalOptions {
-            viewport: Viewport::Fixed(Rect::default()),
+            viewport: Viewport::Fixed(ratatui::layout::Rect::new(0, 0, 120, 30)),
         };
 
         let terminal = Terminal::with_options(backend, options)?;
-        let app = ServerApp::new();
+        
+        let mut client_handler = ClientHandler::new(
+            terminal,
+            self.id,
+            rx_input,
+            tx_output,
+            session.handle().clone(),
+            channel.id(),
+        );
 
-        let mut clients = self.clients.lock().await;
-        clients.insert(self.id, (terminal, app));
+        // Spawn the client handler task
+        let client_id = self.id;
+        let clients_ref = self.clients.clone();
+        tokio::spawn(async move {
+            println!("Starting TUI for client {}", client_id);
+            
+            // Add a small delay to ensure everything is set up
+            tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+            
+            if let Err(e) = client_handler.run_tui().await {
+                eprintln!("Client {} TUI error: {:?}", client_id, e);
+            }
+            
+            // Clean up on exit
+            let mut clients = clients_ref.lock().await;
+            clients.remove(&client_id);
+            
+            println!("TUI ended for client {}", client_id);
+        });
 
         Ok(true)
     }
@@ -491,89 +403,113 @@ impl Handler for AppServer {
         data: &[u8],
         session: &mut Session,
     ) -> Result<(), Self::Error> {
-        match data {
-            // Pressing 'q' closes the connection.
-            b"q" => {
+        let clients = self.clients.lock().await;
+        if let Some(tx_input) = clients.get(&self.id) {
+            if tx_input.send(data.to_vec()).await.is_err() {
+                println!("Client {} handler has closed, removing from clients", self.id);
+                drop(clients);
                 self.clients.lock().await.remove(&self.id);
                 session.close(channel)?;
             }
-            // Pressing 'c' resets the counter for the app.
-            // Only the client with the id sees the counter reset.
-            b"c" => {
-                let mut clients = self.clients.lock().await;
-                let (_, app) = clients.get_mut(&self.id).unwrap();
-                app.counter = 0;
-            }
-            _ => {}
+        } else {
+            println!("No client handler found for client {}", self.id);
         }
-
         Ok(())
     }
 
-    /// The client's window size has changed.
     async fn window_change_request(
         &mut self,
-        _: ChannelId,
+        _channel: ChannelId,
         col_width: u32,
         row_height: u32,
         _: u32,
         _: u32,
-        _: &mut Session,
+        _session: &mut Session,
     ) -> Result<(), Self::Error> {
-        let rect = Rect {
-            x: 0,
-            y: 0,
-            width: col_width as u16,
-            height: row_height as u16,
-        };
-
-        let mut clients = self.clients.lock().await;
-        let (terminal, _) = clients.get_mut(&self.id).unwrap();
-        terminal.resize(rect)?;
-
+        println!("Window size change: {}x{}", col_width, row_height);
+        
+        // Forward the size change to the client handler
+        let clients = self.clients.lock().await;
+        if let Some(tx_input) = clients.get(&self.id) {
+            let resize_event = format!("\x1b[8;{};{}t", row_height, col_width);
+            let _ = tx_input.send(resize_event.as_bytes().to_vec()).await;
+        }
+        
         Ok(())
     }
 
-    /// The client requests a pseudo-terminal with the given
-    /// specifications.
-    ///
-    /// **Note:** Success or failure should be communicated to the client by calling
-    /// `session.channel_success(channel)` or `session.channel_failure(channel)` respectively.
     async fn pty_request(
         &mut self,
         channel: ChannelId,
-        _: &str,
+        term: &str,
         col_width: u32,
         row_height: u32,
-        _: u32,
-        _: u32,
-        _: &[(Pty, u32)],
+        pix_width: u32,
+        pix_height: u32,
+        terminal_modes: &[(Pty, u32)],
         session: &mut Session,
     ) -> Result<(), Self::Error> {
-        let rect = Rect {
-            x: 0,
-            y: 0,
-            width: col_width as u16,
-            height: row_height as u16,
-        };
-
-        let mut clients = self.clients.lock().await;
-        let (terminal, _) = clients.get_mut(&self.id).unwrap();
-        terminal.resize(rect)?;
-
+        println!("PTY request: term={}, size={}x{}, pix={}x{}", term, col_width, row_height, pix_width, pix_height);
+        
+        // Set up the terminal environment for raw mode
+        println!("Terminal modes:");
+        for (mode, value) in terminal_modes {
+            println!("  {:?}: {}", mode, value);
+        }
+        
+        // Send the resize event to the client handler if it exists
+        let clients = self.clients.lock().await;
+        if let Some(tx_input) = clients.get(&self.id) {
+            let resize_event = format!("\x1b[8;{};{}t", row_height, col_width);
+            let _ = tx_input.send(resize_event.as_bytes().to_vec()).await;
+        }
+        
         session.channel_success(channel)?;
+        Ok(())
+    }
 
+    async fn channel_close(&mut self, _channel: ChannelId, _session: &mut Session) -> Result<(), Self::Error> {
+        println!("Channel {} closed for client {}", _channel, self.id);
+        
+        // Clean up client
+        let mut clients = self.clients.lock().await;
+        if let Some(tx) = clients.remove(&self.id) {
+            // The client handler will exit automatically when the input channel is closed.
+        }
+        
         Ok(())
     }
 }
 
-impl Drop for AppServer {
-    fn drop(&mut self) {
-        let id = self.id;
-        let clients = self.clients.clone();
-        tokio::spawn(async move {
-            let mut clients = clients.lock().await;
-            clients.remove(&id);
-        });
-    }
+
+
+pub async fn restore_terminal(terminal: &mut Terminal<CrosstermBackend<Stdout>>){
+    disable_raw_mode().unwrap();
+    execute!(terminal.backend_mut(), LeaveAlternateScreen,)
+        .unwrap();
+}
+
+/// Quit terminal function that can be called from any menu state
+pub async fn quit_terminal() -> Result<(), Box<dyn std::error::Error>> {
+    println!("Quit terminal requested");
+    
+    // Restore terminal to normal mode
+    disable_raw_mode()?;
+    
+    // Clear screen and show cursor
+    execute!(
+        std::io::stdout(),
+        Clear(ClearType::All),
+        crossterm::cursor::Show
+    )?;
+    
+    // ANSI escape sequence to clear the terminal and move cursor to top left
+    print!("\x1B[2J\x1B[H");
+    // Ensure everything is written out
+    std::io::Write::flush(&mut std::io::stdout()).ok();
+    // Exit process
+    quit::with_code(1);
+
+    println!("Terminal restored to normal mode");
+    Ok(())
 }

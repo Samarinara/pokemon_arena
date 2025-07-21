@@ -47,3 +47,4 @@ native-tls = "0.2.14"
 # Storing Passwords where users can't find them
 keyring = "2.0"
 russh = "0.53.0"
+termwiz = "0.23.3"

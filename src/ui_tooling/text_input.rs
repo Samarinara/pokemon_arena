@@ -117,22 +117,33 @@ impl TextInputWidgetState {
     /// Handles a key event. Returns true if Enter was pressed.
     pub fn handle_key(&mut self, key: &ratatui::crossterm::event::KeyEvent) -> bool {
         match self.mode {
-            InputMode::Normal => match key.code {
-                KeyCode::Tab => self.mode = InputMode::Editing,
-                _ => {}
-            },
+            InputMode::Normal => {
+                // In normal mode, only Tab is handled externally to switch to editing.
+                // Other keys are ignored or handled by the main app logic.
+                false
+            }
             InputMode::Editing if key.kind == KeyEventKind::Press => match key.code {
                 KeyCode::Enter => return true,
-                KeyCode::Char(c) => self.enter_char(c),
-                KeyCode::Backspace => self.delete_char(),
-                KeyCode::Left => self.move_cursor_left(),
-                KeyCode::Right => self.move_cursor_right(),
-                KeyCode::Esc => self.mode = InputMode::Normal,
-                _ => {}
+                KeyCode::Char(c) => {
+                    self.enter_char(c);
+                    false
+                },
+                KeyCode::Backspace => {
+                    self.delete_char();
+                    false
+                },
+                KeyCode::Left => {
+                    self.move_cursor_left();
+                    false
+                },
+                KeyCode::Right => {
+                    self.move_cursor_right();
+                    false
+                },
+                _ => false, // Esc and Tab are handled externally now
             },
-            _ => {}
+            _ => false,
         }
-        false
     }
 }
 

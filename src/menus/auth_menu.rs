@@ -1,4 +1,4 @@
-use tracing::{info, error, warn};
+use tracing::{info, error};
 use ratatui::{
     backend::CrosstermBackend, layout::{Constraint, Direction, Layout}, 
     style::{Color, Style}, 
@@ -8,15 +8,15 @@ use ratatui::{
 };
 
 use crate::user_management::email_auth::{send_auth_email, verify_email};
-use crate::{App as MainApp, AppState, AuthState}; // NEW: Import AuthState
+use crate::{App as MainApp, AppState, AuthState}; 
 use crate::restore_terminal;
 use crate::ui_tooling::text_input::draw_text_input;
 use crate::pokemon::pokemon_indexer;
+use crate::menus::menu_system::MenuSystem;
 use rand::Rng;
+use crate::quit_terminal;
 
 use std::sync::{Arc, Mutex};
-use std::thread;
-use std::sync::mpsc::channel;
 
 
 static KEY: std::sync::OnceLock<Arc<Mutex<i32>>> = std::sync::OnceLock::new();
@@ -32,10 +32,56 @@ pub fn menu(f: &mut Frame<'_>, app: &MainApp) {
 pub async fn input(app: &mut MainApp){
     info!("auth_menu::input called");
     match app.auth_state {
-        AuthState::InputEmail => input_email(app).await,
-        AuthState::VerifyEmail => input_key(app).await,
+        AuthState::InputEmail => {
+            info!("Sending verification email");
+            let pokemon_name = generate_key().await;
+            app.user_email = app.email_input.input.to_string();
+            app.verification_code = pokemon_name.clone();
+            if let Err(e) = send_auth_email(pokemon_name, &app.user_email).await {
+                error!("Failed to send email: {}", e);
+            }
+            app.auth_state = AuthState::VerifyEmail;
+            app.selected = 0; // Reset selection when changing auth state
+            app.email_input.input.clear();
+            app.email_input.reset_cursor();
+        }
+        AuthState::VerifyEmail => {
+            info!("Submit button pressed");
+
+            if verify_email(app.verification_code.as_str(), app.user_email.as_str(), app.email_input.input.as_str()){
+                app.state = AppState::MainMenu;
+                app.auth_state = AuthState::LoggedIn;
+                app.selected = 0; // Reset selection when going to main menu
+            }else{
+                if app.strikes < 3{
+                    app.state = AppState::Auth;
+                    app.auth_state = AuthState::VerifyEmail;
+                    app.selected = 0; // Reset selection when staying in verify state
+                    app.strikes += 1;
+                }else{
+                    app.state = AppState::Auth;
+                    app.auth_state = AuthState::InputEmail;
+                    app.selected = 0; // Reset selection when going back to input email
+                    app.strikes = 0;
+                }
+            }
+            app.email_input.input.clear();
+            app.email_input.reset_cursor();
+        }
         _ => {}
     }
+}
+
+// New function to handle resending email
+pub async fn resend_email(app: &mut MainApp) {
+    info!("Resending verification email");
+    let pokemon_name = generate_key().await;
+    app.verification_code = pokemon_name.clone();
+    if let Err(e) = send_auth_email(pokemon_name, &app.user_email).await {
+        error!("Failed to resend email: {}", e);
+    }
+    app.email_input.input.clear();
+    app.email_input.reset_cursor();
 }
 
 pub async fn generate_key() -> String {
@@ -47,71 +93,7 @@ pub async fn generate_key() -> String {
     return key;
 }
 
-async fn input_email(app: &mut MainApp) {
-    info!("input_email called");
-    match app.selected {
-        0 => { // Send Email
-            info!("Sending verification email");
-            let pokemon_name = generate_key().await;
-            app.user_email = app.email_input.input.to_string();
-            app.verification_code = pokemon_name.clone();
-            if let Err(e) = send_auth_email(pokemon_name, &app.user_email).await {
-                error!("Failed to send email: {}", e);
-            }
-            app.auth_state = AuthState::VerifyEmail;
-            app.selected = 0;
-        }
-        1 => { // Exit
-            info!("Exiting from input_email");
-            let mut terminal = Terminal::new(CrosstermBackend::new(std::io::stdout())).unwrap();
-            restore_terminal(&mut terminal).unwrap();
-            let _ = quit::with_code(0);
-        }
-        _ => {}
-    }
-}
 
-async fn input_key(app: &mut MainApp) {
-    info!("input_key called");
-    match app.selected {
-        0 => { // Submit
-            info!("Submit button pressed");
-
-            if verify_email(app.verification_code.as_str(), app.user_email.as_str(), app.email_input.input.as_str()){
-                app.state = AppState::MainMenu;
-                app.auth_state = AuthState::LoggedIn;
-            }else{
-                if app.strikes < 3{
-                    app.state = AppState::Auth;
-                    app.auth_state = AuthState::VerifyEmail;
-                    app.strikes += 1;
-                }else{
-                    app.state = AppState::Auth;
-                    app.auth_state = AuthState::InputEmail;
-                    app.strikes = 0;
-                }
-            }
-            
-        }
-        1 => { // Resend Email
-            info!("Resend Email button pressed");
-             if let Err(e) = send_auth_email(app.verification_code.clone(), &app.email_input.input.to_string()).await {
-                error!("Failed to send email: {}", e);
-            } 
-        }
-        2 => { // Change Email
-            info!("Change Email button pressed");
-            app.auth_state = AuthState::InputEmail;
-        }
-        3 => { // Exit
-            info!("Exiting from input_key");
-            let mut terminal = Terminal::new(CrosstermBackend::new(std::io::stdout())).unwrap();
-            restore_terminal(&mut terminal).unwrap();
-            let _ = quit::with_code(0);
-        }
-        _ => {}
-    }
-}
 
 
 fn draw_email_input(f: &mut Frame<'_>, app: &MainApp) {
@@ -119,9 +101,7 @@ fn draw_email_input(f: &mut Frame<'_>, app: &MainApp) {
         .direction(Direction::Horizontal)
         .margin(1)
         .constraints([
-            Constraint::Percentage(30),
-            Constraint::Percentage(30),
-            Constraint::Percentage(30),
+            Constraint::Percentage(100),
         ])
         .split(f.area());
     let vert_chunks = Layout::default()
@@ -132,11 +112,10 @@ fn draw_email_input(f: &mut Frame<'_>, app: &MainApp) {
             Constraint::Percentage(40),
             Constraint::Percentage(40),
         ])
-        .split(horiz_chunks[1]);
+        .split(horiz_chunks[0]);
 
-
-    let menu_items: &[&str] = &["Send Verification Email", "Exit"];
-    let items: Vec<ListItem> = menu_items
+    let menu = MenuSystem::get_current_menu(app.state, app.auth_state);
+    let items: Vec<ListItem> = menu.items
         .iter()
         .enumerate()
         .map(|(i, &item)| {
@@ -148,9 +127,9 @@ fn draw_email_input(f: &mut Frame<'_>, app: &MainApp) {
             ListItem::new(item).style(style)
         })
         .collect();
-    let menu = List::new(items)
+    let menu_widget = List::new(items)
         .block(Block::default().borders(Borders::ALL).title("Options"));
-    f.render_widget(menu, vert_chunks[1]);
+    f.render_widget(menu_widget, vert_chunks[1]);
 
     // Draw the persistent email input widget
     draw_text_input(f, vert_chunks[0], &app.email_input, "Enter your email:");
@@ -167,9 +146,7 @@ fn draw_key_input(f: &mut Frame<'_>, app: &MainApp) {
         .direction(Direction::Horizontal)
         .margin(1)
         .constraints([
-            Constraint::Percentage(30),
-            Constraint::Percentage(30),
-            Constraint::Percentage(30),
+            Constraint::Percentage(100),
         ])
         .split(f.area());
     let vert_chunks = Layout::default()
@@ -181,12 +158,10 @@ fn draw_key_input(f: &mut Frame<'_>, app: &MainApp) {
             Constraint::Percentage(30),
             Constraint::Percentage(30),
         ])
-        .split(horiz_chunks[1]);
+        .split(horiz_chunks[0]);
 
-    
-
-    let menu_items: &[&str] = &["Submit", "Resend Email", "Change Email", "Exit"];
-    let items: Vec<ListItem> = menu_items
+    let menu = MenuSystem::get_current_menu(app.state, app.auth_state);
+    let items: Vec<ListItem> = menu.items
         .iter()
         .enumerate()
         .map(|(i, &item)| {
@@ -198,9 +173,9 @@ fn draw_key_input(f: &mut Frame<'_>, app: &MainApp) {
             ListItem::new(item).style(style)
         })
         .collect();
-    let menu = List::new(items)
+    let menu_widget = List::new(items)
         .block(Block::default().borders(Borders::ALL).title("Options"));
-    f.render_widget(menu, vert_chunks[2]);
+    f.render_widget(menu_widget, vert_chunks[2]);
 
     // Draw the persistent email input widget
     draw_text_input(f, vert_chunks[0], &app.email_input, "Verification Code:");
