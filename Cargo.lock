@@ -2896,7 +2896,11 @@ dependencies = [
  "russh",
  "serde",
  "serde_json",
+<<<<<<< HEAD
  "termwiz",
+=======
+ "terminput",
+>>>>>>> 4372b9d1fea9274c083097c1d101f8489eeb778f
  "tokio",
  "tracing",
  "tracing-appender",
@@ -4000,6 +4004,7 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 name = "terminfo"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4060,6 +4065,14 @@ dependencies = [
  "wezterm-dynamic",
  "wezterm-input-types",
  "winapi",
+=======
+name = "terminput"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da9bb199f35e3c5d0de21f254e216dff0ccaa60a7e184d570e2c54ad2ad0d6a7"
+dependencies = [
+ "bitflags 2.9.1",
+>>>>>>> 4372b9d1fea9274c083097c1d101f8489eeb778f
 ]
 
 [[package]]
