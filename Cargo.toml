@@ -46,11 +46,9 @@ native-tls = "0.2.14"
 
 # Storing Passwords where users can't find them
 keyring = "2.0"
-<<<<<<< HEAD
 russh = "0.53.0"
 termwiz = "0.23.3"
-=======
 
 # SSH
 terminput = "0.5.1"
->>>>>>> 4372b9d1fea9274c083097c1d101f8489eeb778f
+
