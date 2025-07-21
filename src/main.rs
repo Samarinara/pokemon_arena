@@ -501,7 +501,7 @@ pub async fn quit_terminal() -> Result<(), Box<dyn std::error::Error>> {
         std::io::stdout(),
         Clear(ClearType::All),
         crossterm::cursor::Show
-    )?;
+    )?; 
     
     // ANSI escape sequence to clear the terminal and move cursor to top left
     print!("\x1B[2J\x1B[H");
