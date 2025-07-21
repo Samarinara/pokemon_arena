@@ -1,1 +1,11 @@
+<<<<<<< HEAD
 [2m2025-07-08T23:45:21.868367Z[0m [35mTRACE[0m [2mmio::poll[0m[2m:[0m registering event source with poller: token=Token(94194670485760), interests=READABLE | WRITABLE    
+=======
+[2m2025-07-06T15:32:30.511496Z[0m [35mTRACE[0m [2mmio::poll[0m[2m:[0m registering event source with poller: token=Token(0), interests=READABLE    
+[2m2025-07-06T15:32:30.512170Z[0m [35mTRACE[0m [2mmio::poll[0m[2m:[0m registering event source with poller: token=Token(1), interests=READABLE    
+[2m2025-07-06T15:32:40.061649Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Key event received [3mkey[0m[2m=[0mKeyEvent { code: Esc, modifiers: KeyModifiers(0x0), kind: Press, state: KeyEventState(0x0) }
+[2m2025-07-06T15:32:40.061713Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Auth state key event
+[2m2025-07-06T15:32:40.061721Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Normal mode key event
+[2m2025-07-06T15:32:40.061727Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Escape key pressed, quitting
+[2m2025-07-06T15:32:40.061732Z[0m [32m INFO[0m [2mpokemon_arena[0m[2m:[0m Quitting application
+>>>>>>> 4372b9d1fea9274c083097c1d101f8489eeb778f
