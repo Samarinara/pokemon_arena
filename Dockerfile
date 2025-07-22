@@ -15,7 +15,11 @@ RUN cargo build --release
 FROM debian:bookworm-slim
 
 # Install OpenSSL 3 runtime library
-RUN apt-get update && apt-get install -y libssl3 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y libssl3 libcrypto3 && rm -rf /var/lib/apt/lists/*
+
+ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu
+
+
 
 # Copy the built binary from the builder stage
 COPY --from=builder /usr/src/pokemon_arena/target/release/pokemon_arena .
