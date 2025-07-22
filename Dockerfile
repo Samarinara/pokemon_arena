@@ -1,32 +1,30 @@
-# Use the official Rust image as a builder
+# Step 1: Build with musl for Alpine compatibility
 FROM rust:latest AS builder
 
-# Create a new empty shell project
+# Install musl tools and OpenSSL for musl
+RUN rustup target add x86_64-unknown-linux-musl
+
+RUN apk add --no-cache musl-dev openssl-dev
+
 WORKDIR /usr/src/pokemon_arena
 COPY Cargo.toml Cargo.lock ./
-
-# Copy your source code
 COPY src ./src
 
-# Build for release
-RUN cargo build --release
+# Build statically for musl
+RUN cargo build --release --target x86_64-unknown-linux-musl
 
-# The final, smaller image
-FROM debian:bookworm-slim
+# Step 2: Use minimal Alpine image for runtime
+FROM alpine:latest
 
-# Install OpenSSL 3 runtime library
-RUN apt-get update && apt-get install -y libssl3 libcrypto3 && rm -rf /var/lib/apt/lists/*
+# Add runtime OpenSSL (Alpine provides libssl3)
+RUN apk add --no-cache libssl3
 
-ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu
+# Copy the statically built binary
+COPY --from=builder /usr/src/pokemon_arena/target/x86_64-unknown-linux-musl/release/pokemon_arena .
 
-
-
-# Copy the built binary from the builder stage
-COPY --from=builder /usr/src/pokemon_arena/target/release/pokemon_arena .
-
-# Copy the assets required by the application
+# Copy required assets
 COPY src/pokemon ./src/pokemon
 COPY users ./users
 
-# Set the command to run the application
+# Run it
 CMD ["./pokemon_arena"]
