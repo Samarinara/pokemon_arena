@@ -1,30 +1,47 @@
-# Step 1: Build with musl for Alpine compatibility
-FROM rust:latest AS builder
+# Step 1: Builder using a specific Alpine-based Rust image
+FROM rust:1.88.0-alpine AS builder
 
-# Install musl tools and OpenSSL for musl
+# Install necessary build dependencies for musl target
+RUN apk add --no-cache alpine-sdk openssl-dev cmake
+
+# Add the musl target for Rust compilation
 RUN rustup target add x86_64-unknown-linux-musl
 
-RUN apk add --no-cache musl-dev openssl-dev
-
 WORKDIR /usr/src/pokemon_arena
-COPY Cargo.toml Cargo.lock ./
-COPY src ./src
 
-# Build statically for musl
+# Copy manifest files to leverage Docker cache for dependencies
+COPY Cargo.toml Cargo.lock ./
+
+# Build dependencies first to leverage Docker cache
+RUN mkdir -p src && echo "fn main() {}" > src/main.rs
 RUN cargo build --release --target x86_64-unknown-linux-musl
 
-# Step 2: Use minimal Alpine image for runtime
-FROM alpine:latest
+# Copy the rest of the source code
+COPY src ./src
 
-# Add runtime OpenSSL (Alpine provides libssl3)
+# Build the application
+RUN cargo build --release --target x86_64-unknown-linux-musl
+
+# Step 2: Final image based on a specific Alpine version
+FROM alpine:3.19
+
+# Install runtime dependencies for OpenSSL
 RUN apk add --no-cache libssl3
 
-# Copy the statically built binary
+WORKDIR /app
+
+# Copy the compiled binary from the builder stage
 COPY --from=builder /usr/src/pokemon_arena/target/x86_64-unknown-linux-musl/release/pokemon_arena .
 
 # Copy required assets
 COPY src/pokemon ./src/pokemon
 COPY users ./users
 
-# Run it
+# Ensure the binary is executable
+RUN chmod +x ./pokemon_arena
+
+# Expose the correct port
+EXPOSE 2222
+
+# Set the entrypoint for the container
 CMD ["./pokemon_arena"]
