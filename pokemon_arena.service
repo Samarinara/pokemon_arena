@@ -1,0 +1,25 @@
+[Unit]
+Description=Rust SSH Server Game
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/pokemon_arena
+Restart=always
+RestartSec=5
+User=pokemon
+WorkingDirectory=/var/lib/pokemon_arena
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=pokemon_arena
+Environment="SSL_CERT_FILE=/etc/pki/tls/certs/ca-bundle.crt" # Example for RHEL/Fedora
+
+# Basic hardening
+ProtectSystem=full
+ProtectHome=read-only
+PrivateTmp=true
+NoNewPrivileges=true
+
+
+[Install]
+WantedBy=multi-user.target

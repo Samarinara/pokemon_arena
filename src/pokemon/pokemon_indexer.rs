@@ -44,18 +44,10 @@ pub async fn get_pokemon_by_number(number: i32) -> String {
 }
 
 pub async fn get_pokemon_stat_block(name: &str) -> Option<PokemonStatBlock> {
-    // Try to load the Pokemon stats data, return None if it fails
-    let json_data = match tokio::fs::read_to_string("src/pokemon/pokemon_stats.json").await {
-        Ok(data) => data,
-        Err(_) => return None,
-    };
-    
-    let mut index: HashMap<String, PokemonStatBlock> = match serde_json::from_str(&json_data) {
-        Ok(index) => index,
-        Err(_) => return None,
-    };
-    
-    index.remove(name)
+    // Note: This clones the stat block. If this becomes a performance issue,
+    // consider returning a reference or using an Arc. For now, cloning is fine.
+    let index = get_pokemon_stats_index().await;
+    index.get(name).cloned()
 }
 
 pub async fn get_random_pokemon() -> String {
